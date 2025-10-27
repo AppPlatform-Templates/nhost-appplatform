@@ -1,6 +1,33 @@
 spec:
   name: nhost
   region: nyc
+  ingress:
+    rules:
+      - match:
+          path:
+            prefix: /graphql
+        component:
+          name: graphql
+      - match:
+          path:
+            prefix: /auth
+        component:
+          name: auth
+      - match:
+          path:
+            prefix: /storage
+        component:
+          name: storage
+      - match:
+          path:
+            prefix: /functions
+        component:
+          name: functions
+      - match:
+          path:
+            prefix: /
+        component:
+          name: dashboard
   databases:
     - name: db
       engine: PG
@@ -47,7 +74,7 @@ spec:
           value: "true"
         - key: HASURA_GRAPHQL_LOG_LEVEL
           value: "warn"
-    
+
     # Auth Service
     - name: auth
       image:
@@ -109,7 +136,7 @@ spec:
           value: "user,me"
         - key: POSTGRES_MIGRATIONS_CONNECTION
           value: "${db.DATABASE_URL}"
-    
+
     # Storage Service
     - name: storage
       image:
@@ -146,7 +173,7 @@ spec:
           value: ""
         - key: BIND
           value: ":5000"
-    
+
     # Functions Service
     - name: functions
       image:
@@ -170,7 +197,7 @@ spec:
           value: "${JWT_SECRET}"
         - key: HASURA_GRAPHQL_GRAPHQL_URL
           value: "http://graphql:8080/v1/graphql"
-    
+
     # Dashboard - Admin UI
     - name: dashboard
       image:
@@ -180,8 +207,6 @@ spec:
       instance_count: 1
       instance_size_slug: apps-s-1vcpu-0.5gb
       http_port: 3000
-      routes:
-        - path: /
       envs:
         - key: NEXT_PUBLIC_ENV
           value: "production"

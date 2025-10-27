@@ -66,12 +66,31 @@ Before deploying, you'll need:
 
 ### Deploy
 
+#### Option 1: Deploy to DO Button (Recommended for First-Time Users)
+
 1. Click the **Deploy to DO** button above
 2. Enter required environment variables (see [ENV_TEMPLATE.md](./ENV_TEMPLATE.md))
 3. Choose your region
 4. Click **Deploy** and wait 5-10 minutes
 
 For detailed instructions, see [DEPLOY_TO_DO.md](./DEPLOY_TO_DO.md).
+
+#### Option 2: Deploy via CLI (For Advanced Users)
+
+```bash
+# Clone this repository
+git clone https://github.com/AppPlatform-Templates/nhost-appplatform.git
+cd nhost-appplatform
+
+# Edit .do/app.yaml and replace all <PLACEHOLDER> values with your actual values
+# See ENV_TEMPLATE.md for guidance on each variable
+
+# Deploy using doctl
+doctl apps create --spec .do/app.yaml
+
+# Or for production deployment
+doctl apps create --spec .do/examples/production.yaml
+```
 
 ## Documentation
 
