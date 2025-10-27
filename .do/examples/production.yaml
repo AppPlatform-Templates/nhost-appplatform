@@ -1,0 +1,213 @@
+spec:
+  name: nhost-production
+  region: nyc
+  databases:
+    - name: db
+      engine: PG
+      version: "16"
+      production: true
+      size: db-s-2vcpu-4gb
+      num_nodes: 2
+      cluster_name: nhost-db-prod
+  services:
+    # GraphQL Engine (Hasura) - Production mode, no console
+    - name: graphql
+      image:
+        registry_type: DOCR
+        repository: nhost/graphql-engine
+        tag: v2.46.0-ce
+      instance_count: 2
+      instance_size_slug: apps-s-1vcpu-1gb
+      http_port: 8080
+      health_check:
+        http_path: /healthz
+        initial_delay_seconds: 60
+        period_seconds: 10
+        timeout_seconds: 5
+      envs:
+        - key: HASURA_GRAPHQL_DATABASE_URL
+          value: "${db.DATABASE_URL}"
+        - key: HASURA_GRAPHQL_ADMIN_SECRET
+          value: "${GRAPHQL_ADMIN_SECRET}"
+        - key: HASURA_GRAPHQL_JWT_SECRET
+          value: "${JWT_SECRET}"
+        - key: HASURA_GRAPHQL_ENABLE_CONSOLE
+          value: "false"
+        - key: HASURA_GRAPHQL_DEV_MODE
+          value: "false"
+        - key: HASURA_GRAPHQL_ENABLED_LOG_TYPES
+          value: "startup,http-log,webhook-log,websocket-log"
+        - key: HASURA_GRAPHQL_ENABLE_TELEMETRY
+          value: "false"
+        - key: HASURA_GRAPHQL_CORS_DOMAIN
+          value: "${CORS_ALLOWED_ORIGINS}"
+        - key: HASURA_GRAPHQL_DISABLE_CORS
+          value: "false"
+        - key: HASURA_GRAPHQL_UNAUTHORIZED_ROLE
+          value: "public"
+        - key: HASURA_GRAPHQL_ADMIN_INTERNAL_ERRORS
+          value: "false"
+        - key: HASURA_GRAPHQL_LOG_LEVEL
+          value: "warn"
+        - key: HASURA_GRAPHQL_ENABLE_ALLOWLIST
+          value: "true"
+    
+    # Auth Service - Scaled
+    - name: auth
+      image:
+        registry_type: DOCR
+        repository: nhost/auth
+        tag: "0.40.2"
+      instance_count: 2
+      instance_size_slug: apps-s-1vcpu-1gb
+      http_port: 4000
+      health_check:
+        http_path: /healthz
+        initial_delay_seconds: 60
+        period_seconds: 10
+        timeout_seconds: 5
+      envs:
+        - key: HASURA_GRAPHQL_DATABASE_URL
+          value: "${db.DATABASE_URL}"
+        - key: HASURA_GRAPHQL_ADMIN_SECRET
+          value: "${GRAPHQL_ADMIN_SECRET}"
+        - key: HASURA_GRAPHQL_JWT_SECRET
+          value: "${JWT_SECRET}"
+        - key: HASURA_GRAPHQL_GRAPHQL_URL
+          value: "http://graphql:8080/v1/graphql"
+        - key: AUTH_SERVER_URL
+          value: "${APP_URL}/auth/v1"
+        - key: AUTH_CLIENT_URL
+          value: "${FRONTEND_URL}"
+        - key: AUTH_PORT
+          value: "4000"
+        - key: AUTH_HOST
+          value: "0.0.0.0"
+        - key: AUTH_ACCESS_TOKEN_EXPIRES_IN
+          value: "900"
+        - key: AUTH_REFRESH_TOKEN_EXPIRES_IN
+          value: "2592000"
+        - key: AUTH_DISABLE_NEW_USERS
+          value: "false"
+        - key: AUTH_DISABLE_SIGNUP
+          value: "false"
+        - key: AUTH_EMAIL_SIGNIN_EMAIL_VERIFIED_REQUIRED
+          value: "true"
+        - key: AUTH_SMTP_HOST
+          value: "${SMTP_HOST}"
+        - key: AUTH_SMTP_PORT
+          value: "${SMTP_PORT}"
+        - key: AUTH_SMTP_USER
+          value: "${SMTP_USER}"
+        - key: AUTH_SMTP_PASS
+          value: "${SMTP_PASS}"
+        - key: AUTH_SMTP_SENDER
+          value: "${SMTP_SENDER}"
+        - key: AUTH_SMTP_SECURE
+          value: "${SMTP_SECURE}"
+        - key: AUTH_SMTP_AUTH_METHOD
+          value: "LOGIN"
+        - key: AUTH_USER_DEFAULT_ROLE
+          value: "user"
+        - key: AUTH_USER_DEFAULT_ALLOWED_ROLES
+          value: "user,me"
+        - key: AUTH_CONCEAL_ERRORS
+          value: "true"
+        - key: AUTH_RATE_LIMIT_ENABLE
+          value: "true"
+        - key: POSTGRES_MIGRATIONS_CONNECTION
+          value: "${db.DATABASE_URL}"
+    
+    # Storage Service - Scaled
+    - name: storage
+      image:
+        registry_type: DOCR
+        repository: nhost/storage
+        tag: "0.7.2"
+      instance_count: 2
+      instance_size_slug: apps-s-1vcpu-1gb
+      http_port: 5000
+      envs:
+        - key: HASURA_ENDPOINT
+          value: "http://graphql:8080/v1"
+        - key: HASURA_GRAPHQL_ADMIN_SECRET
+          value: "${GRAPHQL_ADMIN_SECRET}"
+        - key: HASURA_METADATA
+          value: "1"
+        - key: POSTGRES_MIGRATIONS
+          value: "1"
+        - key: POSTGRES_MIGRATIONS_SOURCE
+          value: "${db.DATABASE_URL}?sslmode=require"
+        - key: PUBLIC_URL
+          value: "${APP_URL}/storage"
+        - key: S3_ENDPOINT
+          value: "https://${SPACES_REGION}.digitaloceanspaces.com"
+        - key: S3_BUCKET
+          value: "${SPACES_BUCKET}"
+        - key: S3_REGION
+          value: "${SPACES_REGION}"
+        - key: S3_ACCESS_KEY
+          value: "${SPACES_ACCESS_KEY}"
+        - key: S3_SECRET_KEY
+          value: "${SPACES_SECRET_KEY}"
+        - key: S3_ROOT_FOLDER
+          value: ""
+        - key: BIND
+          value: ":5000"
+    
+    # Functions Service - Scaled
+    - name: functions
+      image:
+        registry_type: DOCR
+        repository: nhost/functions
+        tag: "22-1.4.0"
+      instance_count: 2
+      instance_size_slug: apps-s-1vcpu-1gb
+      http_port: 3000
+      health_check:
+        http_path: /healthz
+        initial_delay_seconds: 180
+        period_seconds: 10
+        timeout_seconds: 5
+      envs:
+        - key: HASURA_GRAPHQL_DATABASE_URL
+          value: "${db.DATABASE_URL}"
+        - key: HASURA_GRAPHQL_ADMIN_SECRET
+          value: "${GRAPHQL_ADMIN_SECRET}"
+        - key: HASURA_GRAPHQL_JWT_SECRET
+          value: "${JWT_SECRET}"
+        - key: HASURA_GRAPHQL_GRAPHQL_URL
+          value: "http://graphql:8080/v1/graphql"
+    
+    # Dashboard - Admin UI
+    - name: dashboard
+      image:
+        registry_type: DOCR
+        repository: nhost/dashboard
+        tag: "2.39.0"
+      instance_count: 1
+      instance_size_slug: apps-s-1vcpu-0.5gb
+      http_port: 3000
+      routes:
+        - path: /
+      envs:
+        - key: NEXT_PUBLIC_ENV
+          value: "production"
+        - key: NEXT_PUBLIC_NHOST_ADMIN_SECRET
+          value: "${GRAPHQL_ADMIN_SECRET}"
+        - key: NEXT_PUBLIC_NHOST_PLATFORM
+          value: "false"
+        - key: NEXT_PUBLIC_NHOST_GRAPHQL_URL
+          value: "${APP_URL}/graphql/v1/graphql"
+        - key: NEXT_PUBLIC_NHOST_AUTH_URL
+          value: "${APP_URL}/auth/v1"
+        - key: NEXT_PUBLIC_NHOST_STORAGE_URL
+          value: "${APP_URL}/storage/v1"
+        - key: NEXT_PUBLIC_NHOST_FUNCTIONS_URL
+          value: "${APP_URL}/functions/v1"
+        - key: NEXT_PUBLIC_NHOST_HASURA_API_URL
+          value: "${APP_URL}/graphql"
+        - key: NEXT_PUBLIC_NHOST_HASURA_CONSOLE_URL
+          value: "${APP_URL}/graphql/console"
+        - key: NEXT_PUBLIC_NHOST_HASURA_MIGRATIONS_API_URL
+          value: "${APP_URL}/graphql"
