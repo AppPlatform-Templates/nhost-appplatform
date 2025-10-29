@@ -38,8 +38,9 @@ spec:
     # GraphQL Engine (Hasura) - Main API endpoint with Console
     - name: graphql
       image:
-        registry_type: DOCR
-        repository: nhost/graphql-engine
+        registry_type: DOCKER_HUB
+        registry: nhost
+        repository: graphql-engine
         tag: v2.46.0-ce
       instance_count: 1
       instance_size_slug: apps-s-1vcpu-0.5gb
@@ -78,8 +79,9 @@ spec:
     # Auth Service
     - name: auth
       image:
-        registry_type: DOCR
-        repository: nhost/auth
+        registry_type: DOCKER_HUB
+        registry: nhost
+        repository: auth
         tag: "0.40.2"
       instance_count: 1
       instance_size_slug: apps-s-1vcpu-0.5gb
@@ -140,8 +142,9 @@ spec:
     # Storage Service
     - name: storage
       image:
-        registry_type: DOCR
-        repository: nhost/storage
+        registry_type: DOCKER_HUB
+        registry: nhost
+        repository: storage
         tag: "0.7.2"
       instance_count: 1
       instance_size_slug: apps-s-1vcpu-0.5gb
@@ -177,8 +180,9 @@ spec:
     # Functions Service
     - name: functions
       image:
-        registry_type: DOCR
-        repository: nhost/functions
+        registry_type: DOCKER_HUB
+        registry: nhost
+        repository: functions
         tag: "22-1.4.0"
       instance_count: 1
       instance_size_slug: apps-s-1vcpu-0.5gb
@@ -201,8 +205,9 @@ spec:
     # Dashboard - Admin UI
     - name: dashboard
       image:
-        registry_type: DOCR
-        repository: nhost/dashboard
+        registry_type: DOCKER_HUB
+        registry: nhost
+        repository: dashboard
         tag: "2.39.0"
       instance_count: 1
       instance_size_slug: apps-s-1vcpu-0.5gb
